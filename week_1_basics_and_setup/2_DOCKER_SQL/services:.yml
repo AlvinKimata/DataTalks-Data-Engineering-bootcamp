@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+##Running postgres.
+docker run -it \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v '/home/debonair/Documents/DataTalks bootcamp/2_DOCKER_SQL/ny_taxi_postgres_data':/var/lib/postgresql/data \
+  -p 5432:5432 \
+  postgres:13
+
+
+
+#Running pgcli
+pgcli -h localhost \
+  -p 5432 \
+  -u root \
+  -d ny_taxi
+  
+#Running pgadmin.
+docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e PGADMIN_DEFAULT_PASSWORD="root" \
+  -p 8080:80 \
+  dpage/pgadmin4 
+
+
+
+#Link to the yellow taxi dataset.
+'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet'
+
+#Install docker network.
+docker network create pg-network
+
+##Installing pg-network to database.
+docker run -it \
+  -e POSTGRES_USER="root" \
+  -e POSTGRES_PASSWORD="root" \
+  -e POSTGRES_DB="ny_taxi" \
+  -v '/home/debonair/Documents/DataTalks bootcamp/2_DOCKER_SQL/ny_taxi_postgres_data':/var/lib/postgresql/data \
+  -p 5432:5432 \
+  --network=pg-network \
+  --name=pg-database \
+  postgres:13
+
+#Installing pg-network to pg-admin.
+docker run -it \
+  -e PGADMIN_DEFAULT_EMAIL="admin@admin.com" \
+  -e PGADMIN_DEFAULT_PASSWORD="root" \
+  -p 8080:80 \
+  --network=pg-network \
+  --name pgadmin \
+  dpage/pgadmin4 
+
+
+#Parameters to pass to 'ingest_data.py' script.
+
+python ingest_data.py \
+  --user=root \
+  --password=root \
+  --host=localhost \
+  --port_number=5432 \
+  --database_name=ny_taxi \
+  --table_name=yellow_taxi_trips \
+  --parquet_url='https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2021-01.parquet'
+
+
+#Setting up a localhost for downloading our data locally instead of from the yellow taxi dataset URL.
+python -m http.server
+
+http://localhost:8000/yellow_tripdata_2021-01.parquet
+
+#Running the docker file.
+docker build -t taxi_ingest:v001 .
+
+docker run -it \
+  --network=pg-network \
+  taxi_ingest:v001 \
+    --user=root \
+    --password=root \
+    --host=localhost \
+    --port_number=5432 \
+    --database_name=ny_taxi \
+    --table_name=yellow_taxi_trips \
+    --parquet_url='http://127.0.0.1:8000/yellow_tripdata_2021-01.parquet'
+
