@@ -21,24 +21,24 @@ resource "google_storage_bucket" "data-lake-bucket" {
     location = var.region
 }
 
-#Optional but recommended settings.
-storage_class = var.storage_class
-uniform_bucket_level_access = true
+ # Optional, but recommended settings:
+#   storage_class = var.storage_class
+#   uniform_bucket_level_access = true
 
-versioning {
-    enabled = true
-}
+# versioning {
+#     enabled = true
+# }
 
-lifecycle_rule {
-    action {
-        type = "Delete"
-    }
-    condition {
-        age = 30 //days
-    }
+# lifecycle_rule {
+#     action {
+#         type = "Delete"
+#     }
+#     condition {
+#         age = 30 //days
+#     }
 
-    force_destroy = true
-}
+#     force_destroy = true
+# }
 
 #DWH
 # Ref: https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset

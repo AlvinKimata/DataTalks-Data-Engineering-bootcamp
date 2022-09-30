@@ -13,7 +13,7 @@ variable "region" {
 }
 
 variable "storage_class" {
-  descripton = "Storage class type for your bucket"
+  description = "Storage class type for your bucket"
   default = "STANDARD"
 }
 
